@@ -33,3 +33,8 @@ or run the following command:
 ```shell
 curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 ```
+
+## Minikube Dashboard
+
+At any moment you can execute `minikube dashboard` to  use Dashboard to get an
+overview of applications running on your cluster.
