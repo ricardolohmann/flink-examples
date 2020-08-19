@@ -18,4 +18,12 @@ public class WordCounter extends Tuple2<String, Integer> {
         this.word = word;
         this.count = count;
     }
+
+    @Override
+    public String toString() {
+        return "WordCounter{" +
+                "word='" + word + '\'' +
+                ", count=" + count +
+                '}';
+    }
 }
