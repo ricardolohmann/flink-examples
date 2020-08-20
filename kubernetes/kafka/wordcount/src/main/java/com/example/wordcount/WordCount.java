@@ -2,9 +2,11 @@ package com.example.wordcount;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
@@ -37,12 +39,14 @@ public class WordCount {
         DataStream<String> counts = env.addSource(consumer)
                 // split up the lines in pairs (2-tuples) containing: (word,1)
                 .flatMap(new Tokenizer())
-                // group by the tuple field "0" and sum up tuple field "1"
+                // group by the tuple field "0"
                 .keyBy(word -> word.f0)
-                // sum values
-                .sum("f1")
+                // create 1 minute window
+                .timeWindow(Time.minutes(1))
+                // sum up tuple field "1"
+                .sum(1)
                 // convert to a simple string
-                .map(WordCounter::toString);
+                .map(Tuple2::toString);
 
         // create kafka producer
         Properties producerProperties = new Properties();
@@ -61,17 +65,17 @@ public class WordCount {
      * function takes a line (String) and splits it into multiple pairs in the form of "(word,1)"
      * ({@code Tuple2<String, Integer>}).
      */
-    public static final class Tokenizer implements FlatMapFunction<String, WordCounter> {
+    public static final class Tokenizer implements FlatMapFunction<String, Tuple2<String, Integer>> {
 
         @Override
-        public void flatMap(String value, Collector<WordCounter> out) {
+        public void flatMap(String value, Collector<Tuple2<String, Integer>> out) {
             // normalize and split line
-            String[] tokens = value.toLowerCase().split("\\W+");
+            String[] words = value.toLowerCase().split("\\W+");
 
             // emit word and counter
-            for (String token : tokens) {
-                if (token.length() > 0) {
-                    out.collect(new WordCounter(token, 1));
+            for (String word : words) {
+                if (word.length() > 0) {
+                    out.collect(new Tuple2<>(word, 1));
                 }
             }
         }
