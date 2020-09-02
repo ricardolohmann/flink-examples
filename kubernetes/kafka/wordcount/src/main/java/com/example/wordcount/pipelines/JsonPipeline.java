@@ -2,7 +2,6 @@ package com.example.wordcount.pipelines;
 
 import com.example.wordcount.KafkaConsumerFactory;
 import com.example.wordcount.KafkaProducerFactory;
-import com.example.wordcount.serialization.WordCounterSerializer;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
@@ -49,7 +48,7 @@ public class JsonPipeline {
 
         counts.print("Print counters");
         // send counters to Kafka
-        counts.addSink(producerFactory.createJsonProducer(new WordCounterSerializer()));
+        counts.addSink(producerFactory.createJsonProducer());
     }
 
     public static final class Tokenizer implements FlatMapFunction<ObjectNode, Tuple2<String, Integer>> {

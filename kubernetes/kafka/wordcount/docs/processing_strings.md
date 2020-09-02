@@ -62,7 +62,9 @@ Insert some messages in the topic by executing the following command and typing
 some words.
 
 ```shell
-$ kubectl -n kafka run kafka-producer -ti --image=strimzi/kafka:0.19.0-kafka-2.5.0 --rm=true --restart=Never -- bin/kafka-console-producer.sh --broker-list my-cluster-kafka-bootstrap:9092 --topic words
+$ kubectl -n kafka run kafka-producer -ti --image=strimzi/kafka:0.19.0-kafka-2.5.0 \
+--rm=true --restart=Never -- bin/kafka-console-producer.sh \
+--broker-list my-cluster-kafka-bootstrap:9092 --topic words
 If you don't see a command prompt, try pressing enter.
 >one
 >another

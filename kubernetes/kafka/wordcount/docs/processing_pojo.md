@@ -2,8 +2,10 @@
 
 Make sure you follow all the **[requirements](../../../../README.md)**.
 
-In this example we'll insert words as JSON and produce word counters as JSON
-too.
+In this example we'll have two jobs.
+One that read data, create objects and insert them in Kafka.
+And other that read objects from Kafka, reduce them by recipient and print
+results.
 
 ## Running pods
 
@@ -52,52 +54,76 @@ Forwarding from [::1]:8081 -> 8081
 After that you can access http://localhost:8081 and you should see something
 like the following image:
 
-![Flink UI](images/flink-ui-1.png)
+![Flink UI](images/flink-ui-2.png)
+
+Here we'll see that 2 jobs are running into the same execution environment.
 
 ## Inserting messages
 
 Now we can insert some messages in Kafka to see our job processing it.
-
-Insert some messages in the topic by executing the following command and typing
-some words.
+We do it with the following command:
 
 ```shell
 $ kubectl -n kafka run kafka-producer -ti --image=strimzi/kafka:0.19.0-kafka-2.5.0 \
 --rm=true --restart=Never -- bin/kafka-console-producer.sh \
---broker-list my-cluster-kafka-bootstrap:9092 --topic words
+--broker-list my-cluster-kafka-bootstrap:9092 --topic pojo-input
 If you don't see a command prompt, try pressing enter.
->{"word": "one"}
->{"word": "another"}
->{"word": "one"}
->{"word": "another"}
->{"word": "one"}
->{"word": "one"}
->{"word": "other"}
+>Ricardo,my message 1
+>Ricardo,my message 2
+>Ricardo,my message 3
+>Lohmann,my message 4
 ```
 
-Now we can see that our job received and processed the words we insert in
-`words` topic (7 records sent).
+Now we can see that our job received and processed the messages we insert in
+`pojo-input` topic (4 records sent).
 
-![Flink Job UI](images/flink-job-1.png)
+![Flink Job UI](images/flink-pojo-job-1.png)
 
-## Consuming messages
-
-After messages were inserted, you can see the result by executing the following command.
+We can see if the POJO objects were sent to Kafka by the following command:
 
 ```shell
 $ kubectl -n kafka run kafka-consumer -ti --image=strimzi/kafka:0.19.0-kafka-2.5.0 \
 --rm=true --restart=Never -- bin/kafka-console-consumer.sh \
 --bootstrap-server my-cluster-kafka-bootstrap:9092 --from-beginning \
---topic wordcount
+--topic pojo-output
 ```
-
-> It's counting words per minute, so, your counters may take a minute to appear
-in the topic.
 
 You should see something like the following:
 
 ```shell
-{"word": "one", "count": 4}
-{"word": "another", "count": 2}
-{"word": "other", "count": 1}
+{"recipient":"Ricardo","message":"my message 1"}
+{"recipient":"Ricardo","message":"my message 2"}
+{"recipient":"Ricardo","message":"my message 3"}
+{"recipient":"Lohmann","message":"my message 4"}
 ```
+
+## Validating results
+
+We can do it by watching the Task Managers logs.
+
+```shell
+$ kubectl logs -f -l component=taskmanager
+```
+
+The last logs should be something like the logs bellow:
+
+```shell
+POJO Produced messages> Message{recipient='Ricardo', message='my message 1'}
+POJO Consumed messages> Message{recipient='Ricardo', message='my message 1'}
+POJO Produced messages> Message{recipient='Ricardo', message='my message 2'}
+POJO Consumed messages> Message{recipient='Ricardo', message='my message 2'}
+POJO Produced messages> Message{recipient='Ricardo', message='my message 3'}
+POJO Consumed messages> Message{recipient='Ricardo', message='my message 3'}
+POJO Produced messages> Message{recipient='Lohmann', message='my message 4'}
+POJO Consumed messages> Message{recipient='Lohmann', message='my message 4'}
+Print counters> Message{recipient='Ricardo', message='my message 1
+my message 2
+my message 3'}
+Print counters> Message{recipient='Lohmann', message='my message 4'}
+```
+
+`POJO Produced messages` are generated in Producer Job and
+`POJO Consumed messages` are generated in Consumer Job. You'll see that messages
+are consumed right after they were inserted in Kafka.
+
+`Print counters` prints the reduce result.

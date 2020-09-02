@@ -31,12 +31,16 @@ We have examples for processing the following data types:
 
 * **[JSON Example](docs/processing_json.md)**
 
+* **[POJO Example](docs/processing_pojo.md)**
+
 ## FAQ
 
 **Manual Cleanup Job Cluster**
 
 ```shell
-kubectl delete -f .kube/cluster-job-submit.yaml; \
+kubectl delete -f .kube/flink-jobs/string-job/cluster-job-submit.yaml; \
+kubectl delete -f .kube/flink-jobs/json-job/cluster-job-submit.yaml; \
+kubectl delete -f .kube/flink-jobs/pojo-job/cluster-job-submit.yaml; \
 kubectl delete deployment/wordcount-cluster -n default; \
 kubectl delete pods --all -n default
 ```

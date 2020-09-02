@@ -1,5 +1,6 @@
 package com.example.wordcount;
 
+import com.example.wordcount.serialization.MessageSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
@@ -32,5 +33,12 @@ public class KafkaConsumerFactory {
         consumerProperties.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         consumerProperties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "word_count_json");
         return new FlinkKafkaConsumer<>(topicName, new JSONKeyValueDeserializationSchema(false), consumerProperties);
+    }
+
+    public FlinkKafkaConsumer<Message> createPojoConsumer() {
+        Properties consumerProperties = new Properties();
+        consumerProperties.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        consumerProperties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "word_count_pojo");
+        return new FlinkKafkaConsumer<>(topicName, new MessageSchema(), consumerProperties);
     }
 }
